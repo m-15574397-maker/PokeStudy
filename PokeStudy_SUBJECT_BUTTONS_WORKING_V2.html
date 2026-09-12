@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pokémon Study Center</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#eef6ff;color:#172033}
+button{border:0;border-radius:12px;padding:12px 16px;font-size:16px;font-weight:bold;cursor:pointer;background:#377dff;color:#fff}
+button:active{transform:scale(.97)}
+button:disabled{background:#aab4c4;cursor:not-allowed}
+input{padding:12px;border:2px solid #ccd6e5;border-radius:10px;font-size:16px;width:100%}
+.screen{display:none;max-width:1000px;margin:auto;padding:20px}
+.screen.active{display:block}
+.welcome{text-align:center;min-height:100vh;display:flex;flex-direction:column;justify-content:center}
+.welcome h1{font-size:38px;margin:8px}
+.welcome p{font-size:21px}
+.big{font-size:20px;padding:16px 25px}
+.card{background:#fff;border-radius:16px;padding:18px;margin:14px 0;box-shadow:0 3px 12px #0001}
+.top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.stat{font-weight:bold;background:#fff;padding:10px 13px;border-radius:10px}
+.poke{text-align:center}
+.poke img{width:170px;height:170px;object-fit:contain}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.choice{flex:1;min-width:140px}
+.correct{background:#16a34a!important}
+.wrong{background:#dc2626!important}
+.question{font-size:24px;font-weight:bold}
+.progress{font-size:18px}
+.collection{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.mon{padding:10px;border-radius:10px;background:#f1f5f9;text-align:center;cursor:pointer}
+.mon.owned{background:#dcfce7}
+.hidden{display:none}
+.muted{color:#64748b}
+#feedback{font-weight:bold;min-height:26px}
+.savebar{display:flex;gap:10px;flex-wrap:wrap}
+.savebar button{flex:1;min-width:140px}
+.saveok{font-weight:bold;min-height:24px}
+
+.starter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin-top:15px}
+.starter-card{background:#f8fafc;border:3px solid #dbe4f0;border-radius:16px;padding:12px;text-align:center;cursor:pointer;transition:.15s}
+.starter-card:hover{transform:translateY(-2px)}
+.starter-card.selected{border-color:#377dff;background:#eaf2ff;box-shadow:0 0 0 3px #377dff33}
+.starter-card img{width:110px;height:110px;object-fit:contain}
+.starter-card b{display:block;font-size:18px}
+</style>
+
+<style>
+.level-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.level-grid button{cursor:pointer}
+.subject-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin-top:10px}
+.subject-grid button{cursor:pointer}
+#subjectBox .selected{outline:3px solid #ffd54a}
+</style>
+
+<style>
+.friend-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.friend-card{padding:12px;border:2px solid #ddd;border-radius:14px;background:#fff}
+.friend-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.friend-actions button{padding:8px 11px}
+</style>
+</head>
+<body>
+
+<section id="welcome" class="screen active welcome">
+<h1>🌟 WELCOME TO POKÉMON STUDY CENTER 🌟</h1>
+<p>There are LOTS of Pokémon!</p>
+<p><b>Choose one first.</b> Then study, answer questions, earn rewards, and collect Pokémon!</p>
+<button class="big" id="startBtn">🎮 START</button>
+</section>
+
+<section id="page2" class="screen">
+<div class="card" style="text-align:center;padding:28px">
+<h1>🌟 WELCOME TO POKÉMON<br>STUDY CENTER 🌟</h1>
+<p style="font-size:24px;margin-top:55px">There are LOTS of Pokémon!</p>
+<p style="font-size:23px"><b>Choose one first.</b> Then study, answer questions,<br>earn rewards, and collect Pokémon!</p>
+<button class="big" id="page2NextBtn" style="width:100%;margin-top:35px">➡️ NEXT</button>
+</div>
+</section>
+
+<section id="page3" class="screen">
+<div class="card">
+<h2>🎯 CHOOSE YOUR STARTER POKÉMON</h2>
+<p>Choose <b>ONE</b> Pokémon to start your adventure!</p>
+<div class="starter-grid" id="starterGrid"></div>
+<p id="starterMsg" style="font-weight:bold;min-height:24px"></p>
+<div class="top" style="margin-top:10px">
+<div class="stat">🎟️ Tickets: <span id="setupTickets">5</span></div>
+<div class="stat">🪙 Coins: <span id="setupCoins">1000</span></div>
+</div>
+</div>
+<div class="card">
+<h2>🔑 ENTER CODE</h2>
+<input id="setupCode" placeholder="Enter code">
+<button id="setupRedeemBtn" style="margin-top:8px">🎁 REDEEM CODE</button>
+<p id="setupCodeMsg" style="font-weight:bold;min-height:24px"></p>
+</div>
+<button id="page3NextBtn" class="big" style="width:100%">➡️ NEXT: ENTER YOUR NAME</button>
+</section>
+
+<section id="page4" class="screen">
+<div class="card" style="text-align:center">
+<h2>👤 ENTER YOUR NAME</h2>
+<p>This name will be saved with your game.</p>
+<input id="playerName" placeholder="Enter your name" maxlength="20">
+<p id="nameMsg" style="font-weight:bold;min-height:24px"></p>
+<button id="finishSetupBtn" class="big" style="width:100%;margin-top:8px">🚀 ENTER STUDY CENTER</button>
+</div>
+</section>
+
+<section id="app" class="screen">
+<div class="card">
+<h2>💾 SAVE & LOAD</h2>
+<div class="savebar">
+<button id="saveBtn">💾 SAVE GAME</button>
+<button id="loadBtn">📂 LOAD GAME</button>
+</div>
+<p id="saveMsg" class="saveok"></p>
+<p class="muted">Your game is saved on this browser/device.</p>
+</div>
+
+<div class="top">
+<div class="stat">🔥 Streak: <span id="streak">0</span></div>
+<div class="stat">🎟️ Tickets: <span id="tickets">0</span></div>
+<div class="stat">🪙 Coins: <span id="coins">0</span></div>
+<div class="stat">💵 Cash: <span id="cash">0</span></div>
+</div>
+
+<div class="card poke">
+<h2>⭐ Your Pokémon</h2>
+<img id="pokeImg" alt="Pokémon">
+<h2 id="currentName">Mew</h2>
+<p>Level <b id="pokeLevel">1</b></p>
+<button id="changeBtn">🔄 Change Pokémon</button>
+</div>
+
+
+
+<div class="card" id="friendsCenter">
+  <h2>👥 FRIEND CENTER</h2>
+  <p><b>👤 Player:</b> <span id="friendPlayerName">Loading...</span></p><p><b>🆔 Your Friend ID:</b> <span id="friendId">Loading...</span></p>
+  <button onclick="copyFriendId()">📋 Copy My ID</button>
+  <div style="margin-top:12px">
+    <input id="friendIdInput" placeholder="Enter a friend's ID" style="padding:10px;border-radius:10px;border:1px solid #aaa;width:70%">
+    <button onclick="addFriend()">➕ Add Friend</button>
+  </div>
+  <div style="margin-top:12px" id="friendList"></div>
+  <div id="friendSendBox" style="margin-top:12px"></div>
+</div>
+<div id="schoolLevels" class="card">
+  <h2>🎓 SCHOOL LEVELS & SUBJECTS</h2>
+  <p><b>Choose your level:</b></p>
+  <div class="level-grid">
+    <button onclick="setSchoolLevel('Kindergarten')">🧸 Kindergarten</button>
+    <button onclick="setSchoolLevel('Standard 1')">1️⃣ Standard 1</button>
+    <button onclick="setSchoolLevel('Standard 2')">2️⃣ Standard 2</button>
+    <button onclick="setSchoolLevel('Standard 3')">3️⃣ Standard 3</button>
+    <button onclick="setSchoolLevel('Standard 4')">4️⃣ Standard 4</button>
+    <button onclick="setSchoolLevel('Standard 5')">5️⃣ Standard 5</button>
+    <button onclick="setSchoolLevel('Standard 6')">6️⃣ Standard 6</button>
+    <button onclick="setSchoolLevel('Form 1')">📘 Form 1</button>
+    <button onclick="setSchoolLevel('Form 2')">📗 Form 2</button>
+    <button onclick="setSchoolLevel('Form 3')">📕 Form 3</button>
+    <button onclick="setSchoolLevel('Form 4')">📙 Form 4</button>
+    <button onclick="setSchoolLevel('Form 5')">📒 Form 5</button>
+  </div>
+  <div id="subjectBox" style="margin-top:14px">
+    <p class="muted">Pick a level to see its subjects.</p>
+  </div>
+</div>
+<div class="card">
+<h2>📚 STUDY CENTER</h2><p id="studySubjectLabel" class="muted"><b>📚 Subject: <span id="currentSubjectText">Math</span></b> — Questions match the selected subject.</p>
+<p class="question" id="question">Loading question...</p>
+<div style="margin:8px 0 14px">
+<div class="row"><button id="hintCashBtn" class="choice">💡 HINT — 100 💵 CASH</button><button id="hintCoinBtn" class="choice">💡 HINT — 100 🪙 COINS</button></div>
+<p id="hint" class="muted" style="margin:8px 0 0"></p>
+</div>
+<div class="row" id="answers"></div>
+<p id="feedback"></p>
+<p class="progress">Answer <b>10 in a row</b> → 🎟️ 1 Ticket</p>
+<p class="progress">Answer <b>20 in a row</b> → 🪙 1,000 Coins</p>
+<p class="progress">Answer <b>30 in a row</b> → 💵 30 Cash</p>
+<button id="nextBtn" class="hidden">➡️ Next Question</button>
+</div>
+
+<div class="card">
+<h2>🎲 PULL POKÉMON</h2>
+<p>Each pull costs <b>500 🪙</b>. Pull more Pokémon at once!</p>
+<div class="row">
+<button onclick="pullPokemon(1)" class="choice">🎲 PULL 1</button>
+<button onclick="pullPokemon(5)" class="choice">🎲 PULL 5</button>
+<button onclick="pullPokemon(10)" class="choice">🎲 PULL 10</button>
+<button onclick="pullPokemon(20)" class="choice">🎲 PULL 20</button>
+<button onclick="pullPokemon(50)" class="choice">🎲 PULL 50</button>
+<button onclick="pullPokemon(100)" class="choice">🎲 PULL 100</button>
+<button onclick="pullPokemon(150)" class="choice">🎲 PULL 150</button>
+</div>
+<p class="muted">Prices: 500 / 2,500 / 5,000 / 10,000 / 25,000 / 50,000 / 75,000 🪙</p>
+<p>⭐ Level 100 gives a <b>FREE PULL 1</b>.</p>
+<p id="pullMsg"></p>
+</div>
+
+<div class="card">
+<h2>⬆️ LEVEL UP</h2>
+<p>Level up ONLY your current Pokémon.</p>
+<div class="row">
+<button id="ticketLevelBtn" class="choice">Use 1 🎟️ Ticket</button>
+<button id="coinLevelBtn" class="choice">Use 1,000 🪙 Coins</button>
+</div>
+<p id="levelMsg"></p>
+</div>
+
+<div class="card">
+<h2>📖 POKÉMON COLLECTION</h2>
+<p><b id="ownedCount">1</b> / <span id="totalCount">...</span> collected</p>
+<input id="search" placeholder="Search Pokémon">
+<div id="collection" class="collection"></div>
+</div>
+
+<div class="card">
+<h2>🔑 ENTER CODE</h2>
+<input id="code" placeholder="Enter code">
+<button id="redeemBtn" style="margin-top:8px">REDEEM</button>
+<p id="codeMsg"></p>
+</div>
+</section>
+
+<script>
+let allNames=[];
+const fallbackNames=["Bulbasaur", "Ivysaur", "Venusaur", "Charmander", "Charmeleon", "Charizard", "Squirtle", "Wartortle", "Blastoise", "Caterpie", "Metapod", "Butterfree", "Weedle", "Kakuna", "Beedrill", "Pidgey", "Pidgeotto", "Pidgeot", "Rattata", "Raticate", "Spearow", "Fearow", "Ekans", "Arbok", "Pikachu", "Raichu", "Sandshrew", "Sandslash", "Nidoran♀", "Nidorina", "Nidoqueen", "Nidoran♂", "Nidorino", "Nidoking", "Clefairy", "Clefable", "Vulpix", "Ninetales", "Jigglypuff", "Wigglytuff", "Zubat", "Golbat", "Oddish", "Gloom", "Vileplume", "Paras", "Parasect", "Venonat", "Venomoth", "Diglett", "Dugtrio", "Meowth", "Persian", "Psyduck", "Golduck", "Mankey", "Primeape", "Growlithe", "Arcanine", "Poliwag", "Poliwhirl", "Poliwrath", "Abra", "Kadabra", "Alakazam", "Machop", "Machoke", "Machamp", "Bellsprout", "Weepinbell", "Victreebel", "Tentacool", "Tentacruel", "Geodude", "Graveler", "Golem", "Ponyta", "Rapidash", "Slowpoke", "Slowbro", "Magnemite", "Magneton", "Farfetch’d", "Doduo", "Dodrio", "Seel", "Dewgong", "Grimer", "Muk", "Shellder", "Cloyster", "Gastly", "Haunter", "Gengar", "Onix", "Drowzee", "Hypno", "Krabby", "Kingler", "Voltorb", "Electrode", "Exeggcute", "Exeggutor", "Cubone", "Marowak", "Hitmonlee", "Hitmonchan", "Lickitung", "Koffing", "Weezing", "Rhyhorn", "Rhydon", "Chansey", "Tangela", "Kangaskhan", "Horsea", "Seadra", "Goldeen", "Seaking", "Staryu", "Starmie", "Mr. Mime", "Scyther", "Jynx", "Electabuzz", "Magmar", "Pinsir", "Tauros", "Magikarp", "Gyarados", "Lapras", "Ditto", "Eevee", "Vaporeon", "Jolteon", "Flareon", "Porygon", "Omanyte", "Omastar", "Kabuto", "Kabutops", "Aerodactyl", "Snorlax", "Articuno", "Zapdos", "Moltres", "Dratini", "Dragonair", "Dragonite", "Mewtwo", "Mew"];
+let owned=new Set(["Mew"]);
+let current="Mew";
+let levels={Mew:1};
+let coins=1000,tickets=5,cash=0,streak=0;
+let currentQuestion=null;
+let answered=false;
+let freePullUsed=false;
+
+const questionBanks = {
+  "English": [
+    {q:"Which word is a noun?",a:["Run","Happy","Cat","Quickly"],c:2},
+    {q:"Choose the correct spelling.",a:["Beautifull","Beautiful","Beutiful","Beautifol"],c:1},
+    {q:"What is the opposite of hot?",a:["Cold","Fast","Big","Tall"],c:0},
+    {q:"Which word is a verb?",a:["Jump","Blue","Table","Happy"],c:0},
+    {q:"Which word is an adjective?",a:["Run","Beautiful","Quickly","School"],c:1},
+    {q:"Choose the correct spelling.",a:["Frend","Freind","Friend","Frined"],c:2},
+    {q:"What is the opposite of big?",a:["Tall","Small","Fast","Hot"],c:1},
+    {q:"Which word is a pronoun?",a:["Apple","She","Green","Jump"],c:1}
+  ],
+  "BM": [
+    {q:"Apakah lawan kata bagi 'besar'?",a:["Kecil","Panjang","Tinggi","Laju"],c:0},
+    {q:"Yang manakah kata nama?",a:["Berlari","Meja","Cantik","Cepat"],c:1},
+    {q:"Yang manakah kata kerja?",a:["Makan","Rumah","Biru","Cantik"],c:0},
+    {q:"Apakah sinonim bagi 'gembira'?",a:["Sedih","Marah","Suka","Takut"],c:2},
+    {q:"Pilih ejaan yang betul.",a:["Sekolah","Sekola","Sekoalah","Sekolh"],c:0},
+    {q:"Ayat manakah yang betul?",a:["Ali sedang makan nasi.","Ali sedang nasi makan.","Sedang Ali makan nasi.","Ali nasi sedang makan."],c:0},
+    {q:"Apakah lawan kata bagi 'panas'?",a:["Besar","Sejuk","Kecil","Keras"],c:1},
+    {q:"Yang manakah kata adjektif?",a:["Cantik","Berlari","Buku","Makan"],c:0}
+  ],
+  "CN": [
+    {q:"“大”的反义词是什么？",a:["小","高","长","快"],c:0},
+    {q:"“苹果”属于什么？",a:["水果","动物","颜色","交通"],c:0},
+    {q:"“快乐”的反义词是什么？",a:["开心","伤心","漂亮","勇敢"],c:1},
+    {q:"哪一个是表示动作的词？",a:["跑","书","蓝色","桌子"],c:0},
+    {q:"“我喜欢吃苹果。”这句话中，水果是什么？",a:["我","喜欢","吃","苹果"],c:3},
+    {q:"“三”后面的数字是什么？",a:["二","四","五","六"],c:1},
+    {q:"哪一个是动物？",a:["猫","汽车","苹果","学校"],c:0},
+    {q:"“上”的反义词是什么？",a:["左","右","下","前"],c:2}
+  ],
+  "MT": [
+    {q:"What is 2 + 3?",a:["4","5","6","7"],c:1},
+    {q:"What is 10 - 4?",a:["5","6","7","8"],c:1},
+    {q:"What is 6 × 4?",a:["20","24","26","28"],c:1},
+    {q:"What is 36 ÷ 6?",a:["4","5","6","7"],c:2},
+    {q:"What is 7 × 7?",a:["42","49","56","63"],c:1},
+    {q:"What is 100 - 37?",a:["61","62","63","64"],c:2},
+    {q:"What is 72 ÷ 9?",a:["6","7","8","9"],c:2},
+    {q:"What is 25 + 16?",a:["39","40","41","42"],c:2},
+    {q:"What is 8 × 6?",a:["42","48","54","56"],c:1},
+    {q:"What is 63 ÷ 7?",a:["7","8","9","10"],c:2}
+  ],
+  "MA": [
+    {q:"Solve: x + 5 = 12",a:["5","6","7","8"],c:2},
+    {q:"Solve: 2x = 14",a:["5","6","7","8"],c:2},
+    {q:"What is 3²?",a:["6","8","9","12"],c:2},
+    {q:"What is √49?",a:["6","7","8","9"],c:1},
+    {q:"Simplify: 3x + 2x",a:["5x","6x","x⁵","5"],c:0},
+    {q:"Solve: x - 4 = 9",a:["11","12","13","14"],c:2},
+    {q:"What is 2³?",a:["6","8","9","12"],c:1},
+    {q:"If y = 3, what is 2y + 1?",a:["5","6","7","8"],c:2}
+  ]
+};
+
+let selectedQuestionSubject = localStorage.getItem("pokemonStudySubject") || "MIX ALL";
+let questions = selectedQuestionSubject==="MIX ALL"
+  ? Object.values(questionBanks).flat()
+  : (questionBanks[selectedQuestionSubject] || questionBanks.MT);
+
+function slug(n){
+return n.toLowerCase().replace(/♀/g,'-f').replace(/♂/g,'-m')
+.replace(/[’'.:]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+}
+function imageFor(n){
+const known={
+"Mew":"151","Mewtwo":"150","Pikachu":"25","Eevee":"133","Charizard":"6",
+"Bulbasaur":"1","Charmander":"4","Squirtle":"7"
+};
+return known[n] ? "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/"+known[n]+".png"
+: "https://img.pokemondb.net/artwork/large/"+slug(n)+".jpg";
+}
+function el(id){return document.getElementById(id)}
+function render(){
+el("streak").textContent=streak;
+el("tickets").textContent=tickets;
+el("coins").textContent=coins;
+el("cash").textContent=cash;
+el("currentName").textContent=current;
+  const subjectText=el("currentSubjectText"); if(subjectText) subjectText.textContent=selectedQuestionSubject;
+el("pokeLevel").textContent=levels[current]||1;
+const im=el("pokeImg"); im.src=imageFor(current);
+im.onerror=()=>{im.onerror=null;im.src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"+(current==="Mew"?"151":"25")+".png"};
+el("ownedCount").textContent=owned.size;
+el("totalCount").textContent=allNames.length;
+const q=el("search").value.toLowerCase();
+const grid=el("collection");grid.innerHTML="";
+allNames.filter(n=>n.toLowerCase().includes(q)).slice(0,400).forEach(n=>{
+const d=document.createElement("div");
+d.className="mon "+(owned.has(n)?"owned":"");
+d.textContent=(owned.has(n)?"✅ ":"🔒 ")+n;
+d.onclick=()=>{if(owned.has(n)){current=n;if(!levels[n])levels[n]=1;render();}};
+grid.appendChild(d);
+});
+}
+
+function newQuestion(){
+  answered=false;
+  const bank=selectedQuestionSubject==="MIX ALL"
+    ? Object.values(questionBanks).flat()
+    : (questionBanks[selectedQuestionSubject] || []);
+  questions=bank;
+
+  if(!bank.length){
+    currentQuestion=null;
+    el("question").textContent="No questions available for this subject yet.";
+    el("answers").innerHTML="";
+    el("feedback").textContent="";
+    el("nextBtn").classList.add("hidden");
+    if(el("hint"))el("hint").textContent="";
+    return;
+  }
+
+  let x=bank[Math.floor(Math.random()*bank.length)];
+  if(bank.length>1 && currentQuestion===x){
+    x=bank[(bank.indexOf(x)+1)%bank.length];
+  }
+  currentQuestion=x;
+  el("question").textContent=x.q;
+  el("feedback").textContent="";
+  if(el("hint"))el("hint").textContent="";
+  el("nextBtn").classList.add("hidden");
+
+  const box=el("answers");
+  box.innerHTML="";
+  x.a.forEach((ans,i)=>{
+    const b=document.createElement("button");
+    b.type="button";
+    b.className="choice";
+    b.textContent=ans;
+    b.onclick=()=>answer(i,b);
+    box.appendChild(b);
+  });
+}
+function answer(i,button){
+if(answered)return;
+answered=true;
+const buttons=[...el("answers").children];
+buttons.forEach(b=>b.disabled=true);
+if(i===currentQuestion.c){
+button.classList.add("correct");
+streak++;
+el("feedback").textContent="✅ CORRECT! Keep your streak!";
+if(streak%10===0){tickets++;el("feedback").textContent+=" 🎟️ +1 Ticket!";}
+if(streak%20===0){coins+=1000;el("feedback").textContent+=" 🪙 +1,000 Coins!";}
+if(streak%30===0){cash+=30;el("feedback").textContent+=" 💵 +30 Cash!";}
+}else{
+button.classList.add("wrong");
+streak=0;
+el("feedback").textContent="❌ Not quite. Streak reset to 0.";
+}
+render();
+el("nextBtn").classList.remove("hidden");
+}
+el("nextBtn").onclick=newQuestion;
+
+function saveGame(){
+const data={
+coins:coins,tickets:tickets,cash:cash,streak:streak,current:current,
+owned:[...owned],levels:levels,freePullUsed:freePullUsed,
+playerName:playerName,friendId:friendId,selectedQuestionSubject:selectedQuestionSubject
+};
+try{
+localStorage.setItem("pokemonStudyCenterSave",JSON.stringify(data));
+el("saveMsg").textContent="✅ GAME SAVED!";
+}catch(e){
+el("saveMsg").textContent="❌ Could not save on this browser.";
+}
+}
+function loadGame(){
+try{
+const raw=localStorage.getItem("pokemonStudyCenterSave");
+if(!raw){el("saveMsg").textContent="❌ No saved game found.";return;}
+const d=JSON.parse(raw);
+coins=Number(d.coins)||0;
+tickets=Number(d.tickets)||0;
+cash=Number(d.cash)||0;
+streak=Number(d.streak)||0;
+current=d.current||"Mew";
+owned=new Set(Array.isArray(d.owned)&&d.owned.length?d.owned:["Mew"]);
+levels=d.levels||{Mew:1};
+if(!levels[current])levels[current]=1;
+freePullUsed=!!d.freePullUsed;
+playerName=d.playerName||playerName;
+if(d.selectedQuestionSubject && questionBanks[d.selectedQuestionSubject]){selectedQuestionSubject=d.selectedQuestionSubject;selectedSchoolSubject=d.selectedQuestionSubject;questions=questionBanks[selectedQuestionSubject];}
+if(d.friendId){friendId=d.friendId;localStorage.setItem("pokemonFriendId",friendId);}
+el("saveMsg").textContent="✅ GAME LOADED!";
+render();
+}catch(e){
+el("saveMsg").textContent="❌ Save data could not be loaded.";
+}
+}
+el("saveBtn").onclick=saveGame;
+el("loadBtn").onclick=loadGame;
+
+let setupStarter="";
+let playerName=localStorage.getItem("pokemonPlayerName")||"";
+const starterChoices=["Pikachu","Eevee","Charmander","Squirtle","Bulbasaur","Mew"];
+
+function showSetupPage(id){
+document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+el(id).classList.add("active");
+}
+function renderStarterChoices(){
+const box=el("starterGrid"); box.innerHTML="";
+starterChoices.forEach(name=>{
+const d=document.createElement("div");
+d.className="starter-card"+(setupStarter===name?" selected":"");
+d.innerHTML='<img src="'+imageFor(name)+'" alt="'+name+'"><b>'+name+'</b><small>⭐ Starter Pokémon</small>';
+d.onclick=()=>{
+setupStarter=name;
+box.querySelectorAll(".starter-card").forEach(x=>x.classList.remove("selected"));
+d.classList.add("selected");
+el("starterMsg").textContent="✅ You chose "+name+"!";
+};
+box.appendChild(d);
+});
+el("setupTickets").textContent=tickets;
+el("setupCoins").textContent=coins;
+}
+el("startBtn").onclick=()=>showSetupPage("page2");
+el("page2NextBtn").onclick=()=>{showSetupPage("page3");renderStarterChoices();};
+el("setupRedeemBtn").onclick=()=>{
+const c=el("setupCode").value.trim().toUpperCase();
+if(c==="STUDY20"){tickets+=20;el("setupCodeMsg").textContent="🎟️ +20 Tickets!";}
+else if(c.startsWith("MEWCODE")){tickets+=999999;coins+=999999;el("setupCodeMsg").textContent="🎁 Huge reward added!";}
+else{el("setupCodeMsg").textContent="❌ Invalid code.";}
+renderStarterChoices();
+};
+el("page3NextBtn").onclick=()=>{
+if(!setupStarter){el("starterMsg").textContent="❌ Please choose one Pokémon first.";return;}
+showSetupPage("page4");
+el("playerName").value=playerName;
+};
+el("finishSetupBtn").onclick=()=>{
+const name=el("playerName").value.trim();
+if(!name){el("nameMsg").textContent="❌ Please enter your name.";return;}
+playerName=name;
+localStorage.setItem("pokemonPlayerName",playerName);
+current=setupStarter;
+owned=new Set([setupStarter]);
+levels={}; levels[setupStarter]=1;
+localStorage.setItem("pokemonStudySetupDone","yes");
+showSetupPage("app");
+newQuestion();
+render();
+if(el("saveMsg")) el("saveMsg").textContent="👋 Welcome, "+playerName+"!";
+};
+
+el("ticketLevelBtn").onclick=()=>{
+if(tickets<1){el("levelMsg").textContent="❌ You need 1 Ticket.";return;}
+tickets--;levels[current]=(levels[current]||1)+1;
+el("levelMsg").textContent="⭐ "+current+" is now Level "+levels[current]+"!";
+render();
+};
+el("coinLevelBtn").onclick=()=>{
+if(coins<1000){el("levelMsg").textContent="❌ You need 1,000 Coins.";return;}
+coins-=1000;levels[current]=(levels[current]||1)+1;
+el("levelMsg").textContent="⭐ "+current+" is now Level "+levels[current]+"!";
+render();
+};
+
+function pullPokemon(count){
+count=Number(count)||1;
+const free=(count===1 && levels[current]>=100 && !freePullUsed);
+const cost=500*count;
+
+if(!free && coins<cost){
+el("pullMsg").textContent="❌ You need "+cost.toLocaleString()+" Coins for Pull "+count+".";
+return;
+}
+
+const available=allNames.filter(n=>!owned.has(n));
+if(!available.length){
+if(tickets>0){
+const gained=tickets*30;
+cash+=gained;
+tickets=0;
+el("pullMsg").textContent="🎉 You collected ALL Pokémon! Your remaining Tickets became "+gained+" Cash.";
+}else{
+el("pullMsg").textContent="🎉 You collected ALL Pokémon!";
+}
+render();
+return;
+}
+
+let pulls=[];
+if(free){
+freePullUsed=true;
+}else{
+coins-=cost;
+}
+
+const maxPulls=Math.min(count,available.length);
+for(let i=0;i<maxPulls;i++){
+const remaining=allNames.filter(n=>!owned.has(n));
+if(!remaining.length) break;
+const pick=remaining[Math.floor(Math.random()*remaining.length)];
+owned.add(pick);
+levels[pick]=1;
+current=pick;
+pulls.push(pick);
+}
+
+el("pullMsg").textContent=free
+? "🎉 FREE PULL! You got "+pulls.join(", ")+"!"
+: "🎉 Pull "+count+" complete! You got "+pulls.length+" Pokémon.";
+render();
+}
+
+function showHint(){
+ if(answered){
+   el("hint").textContent="ℹ️ Answer the next question first.";
+   return;
+ }
+ const q=(currentQuestion?.q||"").toLowerCase();
+ let hintText="💡 Read the question carefully.";
+ if(q.includes("2 + 3")) hintText="💡 Count 2, then add 3.";
+ else if(q.includes("10 - 4")) hintText="💡 Start at 10 and take away 4.";
+ else if(q.includes("3 × 2")) hintText="💡 Think of 3 groups of 2.";
+ else if(q.includes("opposite of hot")) hintText="💡 Think of the opposite temperature.";
+ else if(q.includes("noun")) hintText="💡 A noun names a person, place, animal, or thing.";
+ else if(q.includes("12 ÷ 3")) hintText="💡 Split 12 into 3 equal groups.";
+ else if(q.includes("fruit")) hintText="💡 Choose the food that grows as a fruit.";
+ else if(q.includes("7 + 8")) hintText="💡 Add 7 and 8 together.";
+ else if(q.includes("spelling")) hintText="💡 Look closely at the letters in each choice.";
+ else if(q.includes("20 - 9")) hintText="💡 Start at 20 and take away 9.";
+ el("hint").textContent=hintText;
+ render();
+}
+
+el("hintCashBtn").onclick=()=>{
+ if(cash<100){
+   el("hint").textContent="❌ You need 100 Cash.";
+   return;
+ }
+ cash-=100;
+ showHint();
+};
+
+el("hintCoinBtn").onclick=()=>{
+ if(coins<100){
+   el("hint").textContent="❌ You need 100 Coins.";
+   return;
+ }
+ coins-=100;
+ showHint();
+};
+
+el("changeBtn").onclick=()=>{
+el("collection").scrollIntoView({behavior:"smooth"});
+};
+el("search").oninput=render;
+
+el("redeemBtn").onclick=()=>{
+const c=el("code").value.trim().toUpperCase();
+if(c==="STUDY20"){tickets+=20;el("codeMsg").textContent="🎟️ +20 Tickets!";}
+else if(c.startsWith("MEWCODE")){tickets+=999999;coins+=999999;el("codeMsg").textContent="🎁 Huge reward added!";}
+else el("codeMsg").textContent="❌ Invalid code.";
+render();
+};
+
+async function loadPokemon(){
+try{
+const r=await fetch("https://pokeapi.co/api/v2/pokemon-species?limit=2000");
+const j=await r.json();
+allNames=j.results.map(x=>x.name).filter((x,i,a)=>a.indexOf(x)===i);
+}catch(e){
+allNames=fallbackNames;
+}
+if(!allNames.includes("Mew"))allNames.push("Mew");
+render();
+}
+loadPokemon();
+
+// Friend system
+let friendId=localStorage.getItem('pokemonFriendId');
+if(!friendId){ friendId='PSC-'+Math.floor(100000+Math.random()*900000); localStorage.setItem('pokemonFriendId',friendId); }
+let friends=JSON.parse(localStorage.getItem('pokemonFriends')||'[]');
+function renderFriends(){
+ const p=document.getElementById('friendPlayerName');
+ if(p) p.textContent=playerName||"Player";
+ const el=document.getElementById('friendList'); if(!el)return;
+ if(!friends.length){el.innerHTML='<p class="muted">No friends yet. Add a Friend ID!</p>';return;}
+ el.innerHTML='<h3>👥 My Friends</h3><div class="friend-grid">'+friends.map((f,i)=>`<div class="friend-card"><b>👤 ${f.name||'Friend '+(i+1)}</b><br><small>${f.id}</small><div class="friend-actions"><button onclick="openSendMenu(${i})">⋮</button><button onclick="openChat(${i})">💬 Chat</button><button onclick="removeFriend(${i})">❌</button></div></div>`).join('')+'</div>';
+}
+function addFriend(){const input=document.getElementById('friendIdInput');const id=input.value.trim().toUpperCase();if(!/^PSC-\d{6}$/.test(id)){alert('❌ Enter a valid Friend ID like PSC-123456');return;}if(id===friendId){alert('😄 That is your own ID!');return;}if(friends.some(x=>x.id===id)){alert('Already added!');return;}friends.push({id,name:'Friend'});localStorage.setItem('pokemonFriends',JSON.stringify(friends));input.value='';renderFriends();}
+function removeFriend(i){friends.splice(i,1);localStorage.setItem('pokemonFriends',JSON.stringify(friends));renderFriends();}
+function copyFriendId(){navigator.clipboard?.writeText(friendId);alert('📋 Friend ID copied: '+friendId);}
+let activeFriendIndex=null;
+
+function openSendMenu(i){
+ activeFriendIndex=i;
+ const f=friends[i];
+ const box=document.getElementById('friendSendBox');
+ box.innerHTML=`<div class="card" style="border:3px solid #dbe4f0">
+ <h3>🎁 Send to ${f.name||'Friend'}</h3>
+ <p><b>Choose what to send:</b></p>
+ <div class="row">
+ <button onclick="openSendAmount('coins')">🪙 Coins</button>
+ <button onclick="openSendAmount('tickets')">🎟️ Tickets</button>
+ <button onclick="openSendAmount('cash')">💵 Cash</button>
+ </div>
+ <p id="sendStatus" class="muted">Pick Coins, Tickets, or Cash.</p>
+ </div>`;
+ box.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+function openSendAmount(type){
+ const f=friends[activeFriendIndex];
+ const label=type==='coins'?'Coins 🪙':type==='tickets'?'Tickets 🎟️':'Cash 💵';
+ const box=document.getElementById('friendSendBox');
+ box.innerHTML=`<div class="card" style="border:3px solid #377dff">
+ <h3>🎁 Send ${label} to ${f.name||'Friend'}</h3>
+ <p><b>How many?</b></p>
+ <div class="row">
+ <input id="sendAmount" type="number" min="1" step="1" placeholder="How many? _____________">
+ <button onclick="confirmSend('${type}')">✅ SEND</button>
+ <button onclick="openSendMenu(${activeFriendIndex})">⬅️ BACK</button>
+ </div>
+ <p id="sendStatus"></p>
+ </div>`;
+ document.getElementById('sendAmount').focus();
+}
+
+function confirmSend(type){
+ const amount=Math.floor(Number(document.getElementById('sendAmount').value));
+ const f=friends[activeFriendIndex];
+ if(!Number.isFinite(amount) || amount<=0){
+   document.getElementById('sendStatus').textContent='❌ Enter a valid amount.';
+   return;
+ }
+ let available=type==='coins'?coins:type==='tickets'?tickets:cash;
+ if(amount>available){
+   document.getElementById('sendStatus').textContent='❌ You do not have enough to send that amount.';
+   return;
+ }
+ if(type==='coins') coins-=amount;
+ if(type==='tickets') tickets-=amount;
+ if(type==='cash') cash-=amount;
+ f.messages=f.messages||[];
+ f.messages.push({from:playerName||'Player',kind:type,amount,createdAt:Date.now()});
+ localStorage.setItem('pokemonFriends',JSON.stringify(friends));
+ const name=type==='coins'?'Coins':type==='tickets'?'Tickets':'Cash';
+ document.getElementById('sendStatus').textContent=`✅ Sent ${amount.toLocaleString()} ${name} to ${f.name||'Friend'} in this app.`;
+ render();
+}
+
+function openChat(i){
+ activeFriendIndex=i;
+ const f=friends[i];
+ const messages=f.messages||[];
+ const box=document.getElementById('friendSendBox');
+ box.innerHTML=`<div class="card" style="border:3px solid #dbe4f0">
+ <h3>💬 Chat with ${f.name||'Friend'}</h3>
+ <div id="chatMessages" style="max-height:220px;overflow:auto;background:#f8fafc;padding:10px;border-radius:12px;margin-bottom:10px">
+ ${messages.length?messages.map(m=>`<p><b>${escapeHtml(m.from||'Player')}:</b> ${m.kind==='message'?'💬 '+escapeHtml(m.text):'🎁 '+m.amount+' '+m.kind}</p>`).join(''):'<p class="muted">No messages yet.</p>'}
+ </div>
+ <div class="row">
+ <input id="chatInput" placeholder="Type a message...">
+ <button onclick="sendChatMessage()">📨 Send</button>
+ </div>
+ <button style="margin-top:10px" onclick="openSendMenu(${i})">🎁 Send Coins / Tickets / Cash</button>
+ </div>`;
+ box.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+function escapeHtml(text){
+ return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function sendChatMessage(){
+ const input=document.getElementById('chatInput');
+ const text=input.value.trim();
+ if(!text)return;
+ const f=friends[activeFriendIndex];
+ f.messages=f.messages||[];
+ f.messages.push({from:playerName||'Player',kind:'message',text,createdAt:Date.now()});
+ localStorage.setItem('pokemonFriends',JSON.stringify(friends));
+ openChat(activeFriendIndex);
+}
+document.addEventListener('DOMContentLoaded',()=>{const e=document.getElementById('friendId');if(e)e.textContent=friendId;renderFriends();});
+</script>
+
+<script>
+const schoolSubjects = {
+  "Kindergarten":["English","Bahasa Melayu","Mathematics","Science","Art","Music","Physical Education"],
+  "Standard 1":["Bahasa Melayu","English","Mathematics","Science","Art","Music","Physical Education","Islamic Education","Moral Education"],
+  "Standard 2":["Bahasa Melayu","English","Mathematics","Science","Art","Music","Physical Education","Islamic Education","Moral Education"],
+  "Standard 3":["Bahasa Melayu","English","Mathematics","Science","Art","Music","Physical Education","Islamic Education","Moral Education"],
+  "Standard 4":["Bahasa Melayu","English","Mathematics","Science","History","Geography","Art","Music","Physical Education","Islamic Education","Moral Education","Computer/ICT"],
+  "Standard 5":["Bahasa Melayu","English","Mathematics","Science","History","Geography","Art","Music","Physical Education","Islamic Education","Moral Education","Computer/ICT"],
+  "Standard 6":["Bahasa Melayu","English","Mathematics","Science","History","Geography","Art","Music","Physical Education","Islamic Education","Moral Education","Computer/ICT"],
+  "Form 1":["Bahasa Melayu","English","Mathematics","Science","History","Geography","Art","Computer Science","Islamic Education","Moral Education","Physical Education"],
+  "Form 2":["Bahasa Melayu","English","Mathematics","Science","History","Geography","Art","Computer Science","Islamic Education","Moral Education","Physical Education"],
+  "Form 3":["Bahasa Melayu","English","Mathematics","Science","History","Geography","Art","Computer Science","Islamic Education","Moral Education","Physical Education"],
+  "Form 4":["Bahasa Melayu","English","Mathematics","Additional Mathematics","Biology","Chemistry","Physics","Science","History","Geography","Computer Science","Accounting","Economics","Business","Art","Islamic Education","Moral Education","Physical Education"],
+  "Form 5":["Bahasa Melayu","English","Mathematics","Additional Mathematics","Biology","Chemistry","Physics","Science","History","Geography","Computer Science","Accounting","Economics","Business","Art","Islamic Education","Moral Education","Physical Education"]
+};
+let selectedSchoolLevel = localStorage.getItem("pokemonStudyLevel") || "";
+let selectedSchoolSubject = localStorage.getItem("pokemonStudySubject") || "";
+
+function setSchoolLevel(level){
+  selectedSchoolLevel=level;
+  localStorage.setItem("pokemonStudyLevel",level);
+  selectedSchoolSubject="";
+  localStorage.removeItem("pokemonStudySubject");
+  renderSchoolSubjects();
+}
+function chooseSchoolSubject(subject){
+  const allowed=["MIX ALL","English","BM","CN","MT","MA"];
+  if(!allowed.includes(subject))return;
+
+  selectedSchoolSubject=subject;
+  selectedQuestionSubject=subject;
+  localStorage.setItem("pokemonStudySubject",subject);
+
+  questions = subject==="MIX ALL"
+    ? Object.values(questionBanks).flat()
+    : (questionBanks[subject] || []);
+
+  const label=document.getElementById("currentSubjectText");
+  if(label)label.textContent=subject;
+
+  if(typeof renderSchoolSubjects==="function")renderSchoolSubjects();
+
+  const box=document.getElementById("subjectBox");
+  if(box){
+    const note=document.createElement("p");
+    note.style.fontWeight="bold";
+    note.textContent="✅ Selected: "+subject;
+    box.appendChild(note);
+  }
+
+  if(typeof newQuestion==="function" && document.getElementById("app")?.classList.contains("active")){
+    newQuestion();
+  }
+}
+const availableQuestionSubjects=["English","BM","CN","MT","MA"];
+
+function renderSchoolSubjects(){
+  const box=document.getElementById("subjectBox");
+  if(!box)return;
+
+  const subjects=["English","BM","CN","MT","MA"];
+  let buttons='<div class="subject-grid">';
+  buttons+='<button type="button" onclick="chooseSchoolSubject(\'MIX ALL\')">🎲 MIX ALL</button>';
+  subjects.forEach(s=>{
+    buttons+='<button type="button" onclick="chooseSchoolSubject(\''+s+'\')">📚 '+s+'</button>';
+  });
+  buttons+='</div>';
+
+  box.innerHTML="<h3>"+(selectedSchoolLevel||"School")+" — Subjects</h3>"
+    +buttons
+    +"<p class='muted'>Tap a button: each subject uses its own questions.</p>";
+}
+document.addEventListener("DOMContentLoaded",renderSchoolSubjects);
+document.addEventListener("DOMContentLoaded",()=>{
+if(localStorage.getItem("pokemonStudySetupDone")!=="yes") showSetupPage("welcome");
+});
+
+
+</script>
+</body>
+</html>
